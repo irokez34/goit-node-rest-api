@@ -1,0 +1,7 @@
+contactsRouter - файл с путями, ендпоинты
+contactsControllers - файл где мы обрабатываем запросы по разным путям(пути: contactsRouter)
+app - основной файл
+папка schemas - ?
+db/contacts.json - файл с контактами 
+contactsServices - файл с функциями, обрабатываем параметры введенные в строку(GET_ALL_CONTACTS; GET_CONTACT_BY_ID)
+разобраться с еррорками 
