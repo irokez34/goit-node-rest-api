@@ -10,7 +10,7 @@ export async function listContacts() {
 }
 
 function writeContact(contacts) {
-  return fs.writeFile(contactsPath, JSON.stringify(contacts));
+  return fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2));
 }
 
 export async function getContactById(contactId) {
@@ -34,10 +34,22 @@ export async function removeContact(contactId) {
   return deleteContact;
 }
 
-export async function addContact(name, email, phone) {
+export async function addContact({ name, email, phone }) {
   const contacts = await listContacts();
   const newContact = { id: crypto.randomUUID(), name, email, phone };
   contacts.push(newContact);
   await writeContact(contacts);
   return newContact;
+}
+
+export async function updateContactService(contactId, body) {
+  const contacts = await listContacts();
+  const index = contacts.findIndex((contact) => contact.id === contactId);
+  if (index === -1) {
+    return null;
+  }
+  const updatedContact = { ...contacts[index], ...body };
+  contacts[index] = updatedContact;
+  await writeContact(contacts);
+  return updatedContact;
 }
