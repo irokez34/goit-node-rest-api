@@ -1,10 +1,11 @@
-  import express from "express";
+import express from "express";
 import {
   getAllContacts,
   getOneContact,
   deleteContact,
   createContact,
   updateContact,
+  toggleFavoriteContact,
 } from "../controllers/contactsControllers.js";
 
 const contactsRouter = express.Router();
@@ -19,4 +20,5 @@ contactsRouter.post("/", createContact);
 
 contactsRouter.put("/:id", updateContact);
 
+contactsRouter.patch("/:id/favorite", toggleFavoriteContact);
 export default contactsRouter;
