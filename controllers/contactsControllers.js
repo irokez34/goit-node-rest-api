@@ -17,10 +17,11 @@ export const getOneContact = async (req, res, next) => {
 
   try {
     const contact = await Contact.findById(id);
-
+    if (!contact) {
+      throw HttpError(404);
+    }
     res.send(contact);
   } catch (error) {
-    console.log(error);
     next(error);
   }
 };
@@ -30,7 +31,9 @@ export const deleteContact = async (req, res, next) => {
 
   try {
     const contact = await Contact.findByIdAndDelete(id);
-
+    if (!contact) {
+      throw HttpError(404);
+    }
     res.send(contact);
   } catch (error) {
     next(error);
@@ -49,14 +52,12 @@ export const updateContact = async (req, res, next) => {
   const { id } = req.params;
 
   try {
-    const contact = await Contact.findById(id);
-
-    if (!contact) {
-      throw HttpError(404);
-    }
     const updatedContact = await Contact.findByIdAndUpdate(id, body, {
       new: true,
     });
+    if (!updatedContact) {
+      throw HttpError(404);
+    }
     res.send(updatedContact);
   } catch (error) {
     next(error);
