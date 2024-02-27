@@ -1,10 +1,6 @@
 import HttpError from "../helpers/HttpError.js";
 import Contact from "../model/contactsSchema.js";
-import {
-  createContactSchema,
-  toggleFavoriteContactSchema,
-  updateContactSchema,
-} from "../schemas/contactsSchemas.js";
+
 import { updateStatusContact } from "../services/contactsServices.js";
 
 export const getAllContacts = async (req, res, next) => {
@@ -21,10 +17,11 @@ export const getOneContact = async (req, res, next) => {
 
   try {
     const contact = await Contact.findById(id);
-    console.log(contact);
+
     res.send(contact);
   } catch (error) {
-    next(HttpError(404));
+    console.log(error);
+    next(error);
   }
 };
 
@@ -36,7 +33,7 @@ export const deleteContact = async (req, res, next) => {
 
     res.send(contact);
   } catch (error) {
-    next(HttpError(404));
+    next(error);
   }
 };
 
@@ -57,10 +54,12 @@ export const updateContact = async (req, res, next) => {
     if (!contact) {
       throw HttpError(404);
     }
-    const updatedContact = await Contact.findByIdAndUpdate(id, body, { new: true });
+    const updatedContact = await Contact.findByIdAndUpdate(id, body, {
+      new: true,
+    });
     res.send(updatedContact);
   } catch (error) {
-    next(HttpError(404));
+    next(error);
   }
 };
 
@@ -76,6 +75,6 @@ export const toggleFavoriteContact = async (req, res, next) => {
 
     res.send(status);
   } catch (error) {
-    next(HttpError(404));
+    next(error);
   }
 };
