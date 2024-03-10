@@ -58,7 +58,10 @@ export const loginUser = async (req, res, next) => {
 };
 
 export const logoutUser = async (req, res, next) => {
-  const { id } = req.user;
+  console.log(req.user);
+  const {
+    user: { id },
+  } = req.user;
   try {
     const user = await User.findById(id);
     if (user === null) {
@@ -72,7 +75,9 @@ export const logoutUser = async (req, res, next) => {
 };
 
 export const getCurrentUser = async (req, res, next) => {
-  const { id } = req.user;
+  const {
+    user: { id },
+  } = req.user;
   try {
     const user = await User.findById(id);
     if (user === null) {

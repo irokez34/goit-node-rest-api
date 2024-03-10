@@ -3,7 +3,8 @@ import { updateStatusContact } from "../services/contactsServices.js";
 
 export const getAllContacts = async (req, res, next) => {
   try {
-    const contacts = await Contact.find();
+    const { _id: owner } = req.user;
+    const contacts = await Contact.find({ owner });
     res.send(contacts);
   } catch (error) {
     next(error);
@@ -40,8 +41,9 @@ export const deleteContact = async (req, res, next) => {
 
 export const createContact = async (req, res, next) => {
   const { body } = req;
+  const { _id: owner } = req.user;
   const newContact = { ...body };
-  const contact = await Contact.create(newContact);
+  const contact = await Contact.create(newContact, owner);
   res.status(201).send(contact);
 };
 

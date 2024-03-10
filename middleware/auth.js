@@ -1,31 +1,27 @@
 import jwt from "jsonwebtoken";
 import HttpError from "../helpers/HttpError.js";
-
-export function auth(req, res, next) {
+import User from "../schemas/userSchema.js";
+export async function auth(req, res, next) {
   const authHeader = req.headers.authorization;
 
   if (typeof authHeader === "undefined") {
-    throw HttpError(401);
+    return HttpError(401);
   }
   const [bearer, token] = authHeader.split(" ", 2);
 
-  if (bearer !== "Bearer") {
-    throw HttpError(401, "Invalid token");
+  if (bearer !== "Bearer" || token === null) {
+    return HttpError(401, "Invalid token");
   }
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, decode) => {
-    if (err) {
-      if (err.name === "TokenExpiredError") {
-        throw HttpError(401, "Token expired");
-      }
-      throw HttpError(401, "Invalid token");
+  try {
+    const { id } = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(id);
+    if (!user || user.token !== token || !user.token) {
+      throw HttpError(401, "Invalid Token");
     }
-
-    req.user = {
-      id: decode.id,
-      email: decode.email,
-    };
-  });
-
-  next();
+    req.user = user;
+    next();
+  } catch (error) {
+    next(error);
+  }
 }
