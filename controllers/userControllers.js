@@ -13,7 +13,6 @@ export const registerUser = async (req, res, next) => {
       throw HttpError(409, "User already registered");
     }
     const passwordHash = await bcrypt.hash(password, 10);
-
     await User.create({
       email: normalizeEmail,
       password: passwordHash,
@@ -59,6 +58,29 @@ export const loginUser = async (req, res, next) => {
 };
 
 export const logoutUser = async (req, res, next) => {
-  console.log(req.user);
-  res.send("work");
+  const { id } = req.user;
+  try {
+    const user = await User.findById(id);
+    if (user === null) {
+      throw HttpError(401);
+    }
+    await User.findByIdAndUpdate(id, { token: null });
+    res.send(204);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getCurrentUser = async (req, res, next) => {
+  const { id } = req.user;
+  try {
+    const user = await User.findById(id);
+    if (user === null) {
+      throw HttpError(401);
+    }
+    const { email, subscription } = user;
+    res.send({ email, subscription });
+  } catch (error) {
+    next(error);
+  }
 };

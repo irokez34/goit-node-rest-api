@@ -1,5 +1,6 @@
-import express, { json } from "express";
+import express from "express";
 import {
+  getCurrentUser,
   loginUser,
   logoutUser,
   registerUser,
@@ -7,10 +8,10 @@ import {
 import { auth } from "../middleware/auth.js";
 
 const userRouter = express.Router();
-const jsonParser = express.json();
 
 userRouter.post("/register", registerUser);
 userRouter.post("/login", loginUser);
 userRouter.post("/logout", auth, logoutUser);
+userRouter.get("/current", auth, getCurrentUser);
 
 export default userRouter;
