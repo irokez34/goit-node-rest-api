@@ -1,10 +1,12 @@
+import HttpError from "../helpers/HttpError.js";
 import Contact from "../schemas/contactsSchemas.js";
 import { updateStatusContact } from "../services/contactsServices.js";
 
 export const getAllContacts = async (req, res, next) => {
   try {
     const { _id: owner } = req.user;
-    const contacts = await Contact.find({ owner });
+    const contacts = await Contact.find(owner);
+    console.log(contacts);
     res.send(contacts);
   } catch (error) {
     next(error);
@@ -26,10 +28,9 @@ export const getOneContact = async (req, res, next) => {
 };
 
 export const deleteContact = async (req, res, next) => {
-  const { id } = req.params;
-
+  const { _id: owner } = req.user;
   try {
-    const contact = await Contact.findByIdAndDelete(id);
+    const contact = await Contact.findByIdAndDelete(owner);
     if (!contact) {
       throw HttpError(404);
     }
@@ -42,17 +43,23 @@ export const deleteContact = async (req, res, next) => {
 export const createContact = async (req, res, next) => {
   const { body } = req;
   const { _id: owner } = req.user;
-  const newContact = { ...body };
-  const contact = await Contact.create(newContact, owner);
-  res.status(201).send(contact);
-};
-
-export const updateContact = async (req, res, next) => {
-  const { body } = req;
-  const { id } = req.params;
 
   try {
-    const updatedContact = await Contact.findByIdAndUpdate(id, body, {
+    const newContact = { ...body, owner };
+    const contact = await Contact.create(newContact);
+    if (!contact) {
+      throw HttpError(401);
+    }
+    res.status(201).send(contact);
+  } catch (error) {
+    next(error);
+  }
+};
+export const updateContact = async (req, res, next) => {
+  const { body } = req;
+  const { _id: owner } = req.user;
+  try {
+    const updatedContact = await Contact.findByIdAndUpdate({ owner }, body, {
       new: true,
     });
     if (!updatedContact) {
@@ -66,9 +73,9 @@ export const updateContact = async (req, res, next) => {
 
 export const toggleFavoriteContact = async (req, res, next) => {
   const { body } = req;
-  const { id } = req.params;
+  const { _id: owner } = req.user;
   try {
-    const contact = Contact.findById(id);
+    const contact = Contact.findById({ owner });
     if (!contact) {
       throw new HttpError(404);
     }
