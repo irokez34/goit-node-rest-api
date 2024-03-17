@@ -1,12 +1,11 @@
 import HttpError from "../helpers/HttpError.js";
 import Contact from "../schemas/contactsSchemas.js";
-import { updateStatusContact } from "../services/contactsServices.js";
 
 export const getAllContacts = async (req, res, next) => {
   try {
     const { _id: owner } = req.user;
-    const contacts = await Contact.find(owner);
-    console.log(contacts);
+
+    const contacts = await Contact.find({ owner });
     res.send(contacts);
   } catch (error) {
     next(error);
@@ -28,9 +27,9 @@ export const getOneContact = async (req, res, next) => {
 };
 
 export const deleteContact = async (req, res, next) => {
-  const { _id: owner } = req.user;
+  const { id } = req.params;
   try {
-    const contact = await Contact.findByIdAndDelete(owner);
+    const contact = await Contact.findByIdAndDelete(id);
     if (!contact) {
       throw HttpError(404);
     }
@@ -43,7 +42,6 @@ export const deleteContact = async (req, res, next) => {
 export const createContact = async (req, res, next) => {
   const { body } = req;
   const { _id: owner } = req.user;
-
   try {
     const newContact = { ...body, owner };
     const contact = await Contact.create(newContact);
@@ -57,9 +55,10 @@ export const createContact = async (req, res, next) => {
 };
 export const updateContact = async (req, res, next) => {
   const { body } = req;
-  const { _id: owner } = req.user;
+  const { id } = req.params;
+
   try {
-    const updatedContact = await Contact.findByIdAndUpdate({ owner }, body, {
+    const updatedContact = await Contact.findByIdAndUpdate(id, body, {
       new: true,
     });
     if (!updatedContact) {
@@ -73,15 +72,14 @@ export const updateContact = async (req, res, next) => {
 
 export const toggleFavoriteContact = async (req, res, next) => {
   const { body } = req;
-  const { _id: owner } = req.user;
+  const { id } = req.params;
   try {
-    const contact = Contact.findById({ owner });
+    const contact = Contact.findByIdAndUpdate(id, body, { new: true });
     if (!contact) {
       throw new HttpError(404);
     }
-    const status = await updateStatusContact(id, body);
 
-    res.send(status);
+    res.send(contact);
   } catch (error) {
     next(error);
   }
