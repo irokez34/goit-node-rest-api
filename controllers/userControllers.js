@@ -2,12 +2,18 @@ import HttpError from "../helpers/HttpError.js";
 import User from "../schemas/userSchema.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import gravatar from "gravatar";
+import Jimp from "jimp";
+
+import * as path from "node:path";
+
+// ----------------------------------------------------------------------//
 
 export const registerUser = async (req, res, next) => {
   const { email, password } = req.body;
   try {
     const normalizeEmail = email.toLowerCase();
-
+    const avatar = gravatar.url(normalizeEmail);
     const user = await User.findOne({ email: normalizeEmail });
     if (user !== null) {
       throw HttpError(409, "User already registered");
@@ -16,6 +22,7 @@ export const registerUser = async (req, res, next) => {
     await User.create({
       email: normalizeEmail,
       password: passwordHash,
+      avatarURL: avatar,
     });
 
     res.status(201).send({ message: "Registration successfully" });
@@ -80,6 +87,34 @@ export const getCurrentUser = async (req, res, next) => {
     }
     const { email, subscription } = user;
     res.send({ email, subscription });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const uploadAvatar = async (req, res, next) => {
+  const { id } = req.user;
+
+  try {
+    if (req.file === undefined) {
+      throw HttpError(404);
+    }
+    const filePath = path.join(
+      process.cwd(),
+      "public/avatars",
+      `${id}${req.file.originalname}`
+    );
+    const img = await Jimp.read(req.file.path);
+    img.resize(250, 250);
+    await img.writeAsync(filePath);
+    const user = await User.findByIdAndUpdate(
+      id,
+      { avatarURL: filePath },
+      {
+        new: true,
+      }
+    );
+    res.send(user);
   } catch (error) {
     next(error);
   }

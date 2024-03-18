@@ -1,6 +1,8 @@
 import HttpError from "../helpers/HttpError.js";
 import Contact from "../schemas/contactsSchemas.js";
 
+//=-----------------------------------------------------------//
+
 export const getAllContacts = async (req, res, next) => {
   try {
     const { _id: owner } = req.user;
@@ -80,7 +82,6 @@ export const updateContact = async (req, res, next) => {
 export const toggleFavoriteContact = async (req, res, next) => {
   const { body } = req;
   const { id } = req.params;
-
   const { _id: owner } = req.user;
   try {
     const contact = Contact.findOneAndUpdate({ _id: id, owner }, body, {
