@@ -64,7 +64,7 @@ export const logoutUser = async (req, res, next) => {
       throw HttpError(401);
     }
     await User.findByIdAndUpdate(id, { token: null });
-    res.send(204);
+    res.sendStatus(204);
   } catch (error) {
     next(error);
   }
