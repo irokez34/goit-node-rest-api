@@ -4,8 +4,9 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import gravatar from "gravatar";
 import Jimp from "jimp";
-
+import crypto from "node:crypto";
 import * as path from "node:path";
+import { transport } from "../nodemailer/transporter.js";
 
 // ----------------------------------------------------------------------//
 
@@ -14,6 +15,7 @@ export const registerUser = async (req, res, next) => {
   try {
     const normalizeEmail = email.toLowerCase();
     const avatar = gravatar.url(normalizeEmail);
+    const verificationToken = crypto.randomUUID();
     const user = await User.findOne({ email: normalizeEmail });
     if (user !== null) {
       throw HttpError(409, "User already registered");
@@ -23,7 +25,19 @@ export const registerUser = async (req, res, next) => {
       email: normalizeEmail,
       password: passwordHash,
       avatarURL: avatar,
+      verificationToken,
     });
+    const message = {
+      from: "jhmdaurel@gmail.com", // sender address
+      to: "jhmdaurel@gmail.com",
+      subject: "Hello ✔", // Subject line
+      text: `to verify your account go for this link http://localhost:3000/api/users/verify/${verificationToken}`, // plain text body
+      html: `<b>to verify your account go for this  <a href="http://localhost:3000/api/users/verify/${verificationToken}">link</a></b>`, // html body
+    };
+    const sendMessage = await transport.sendMail(message);
+    if (!sendMessage) {
+      throw HttpError(400, "Cannot send message");
+    }
 
     res.status(201).send({ message: "Registration successfully" });
   } catch (error) {
@@ -32,6 +46,7 @@ export const registerUser = async (req, res, next) => {
 };
 
 export const loginUser = async (req, res, next) => {
+  ``;
   try {
     const { email, password } = req.body;
 
@@ -45,6 +60,9 @@ export const loginUser = async (req, res, next) => {
 
     if (isMatch === false) {
       throw HttpError(401, "Email or password is incorrect");
+    }
+    if (user.verify === false) {
+      throw HttpError(401, "Not Verify");
     }
 
     const token = jwt.sign(
@@ -99,11 +117,7 @@ export const uploadAvatar = async (req, res, next) => {
     if (req.file === undefined) {
       throw HttpError(404);
     }
-    const filePath = path.join(
-      process.cwd(),
-      "public/avatars",
-      `${id}${req.file.originalname}`
-    );
+    const filePath = path.join(process.cwd(), "public/avatars", `${id}${req.file.originalname}`);
     const img = await Jimp.read(req.file.path);
     img.resize(250, 250);
     await img.writeAsync(filePath);
@@ -115,6 +129,53 @@ export const uploadAvatar = async (req, res, next) => {
       }
     );
     res.send(user);
+  } catch (error) {
+    next(error);
+  }
+};
+export const verifyUser = async (req, res, next) => {
+  try {
+    const { verificationToken } = req.params;
+    const user = await User.findOneAndUpdate(
+      { verificationToken },
+      { verify: true, verificationToken: null },
+      { new: true }
+    );
+    if (user === null) {
+      throw HttpError(404);
+    }
+
+    res.send({ message: "Verification successful" });
+  } catch (error) {
+    next(error);
+  }
+};
+export const verifyByEmail = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    const { verify, verificationToken } = user;
+    if (user === null) {
+      throw HttpError(404);
+    }
+    if (email === null) {
+      throw HttpError(400, "missing required field email");
+    }
+    if (verify === true) {
+      throw HttpError(400, "Verification has already been passed");
+    }
+    const message = {
+      from: "jhmdaurel@gmail.com", // sender address
+      to: "jhmdaurel@gmail.com",
+      subject: "Hello ✔", // Subject line
+      text: `to verify your account go for this link http://localhost:3000/api/users/verify/${verificationToken}`, // plain text body
+      html: `<b>to verify your account go for this  <a href="http://localhost:3000/api/users/verify/${verificationToken}">link</a></b>`, // html body
+    };
+    const sendMessage = await transport.sendMail(message);
+    if (!sendMessage) {
+      throw HttpError(400, "Cannot send message");
+    }
+    res.send({ message: "Check ur email" }).status(200);
   } catch (error) {
     next(error);
   }
