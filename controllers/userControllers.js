@@ -7,12 +7,13 @@ import Jimp from "jimp";
 import crypto from "node:crypto";
 import * as path from "node:path";
 import { transport } from "../nodemailer/transporter.js";
+import { message } from "../nodemailer/message.js";
 
 // ----------------------------------------------------------------------//
 
 export const registerUser = async (req, res, next) => {
-  const { email, password } = req.body;
   try {
+    const { email, password } = req.body;
     const normalizeEmail = email.toLowerCase();
     const avatar = gravatar.url(normalizeEmail);
     const verificationToken = crypto.randomUUID();
@@ -21,20 +22,14 @@ export const registerUser = async (req, res, next) => {
       throw HttpError(409, "User already registered");
     }
     const passwordHash = await bcrypt.hash(password, 10);
-    await User.create({
+   const newUser =  await User.create({
       email: normalizeEmail,
       password: passwordHash,
       avatarURL: avatar,
       verificationToken,
     });
-    const message = {
-      from: "jhmdaurel@gmail.com", // sender address
-      to: "jhmdaurel@gmail.com",
-      subject: "Hello ✔", // Subject line
-      text: `to verify your account go for this link http://localhost:3000/api/users/verify/${verificationToken}`, // plain text body
-      html: `<b>to verify your account go for this  <a href="http://localhost:3000/api/users/verify/${verificationToken}">link</a></b>`, // html body
-    };
-    const sendMessage = await transport.sendMail(message);
+
+    const sendMessage = await transport.sendMail(message(email, newUser.verificationToken));
     if (!sendMessage) {
       throw HttpError(400, "Cannot send message");
     }
@@ -164,14 +159,7 @@ export const verifyByEmail = async (req, res, next) => {
     if (verify === true) {
       throw HttpError(400, "Verification has already been passed");
     }
-    const message = {
-      from: "jhmdaurel@gmail.com", // sender address
-      to: "jhmdaurel@gmail.com",
-      subject: "Hello ✔", // Subject line
-      text: `to verify your account go for this link http://localhost:3000/api/users/verify/${verificationToken}`, // plain text body
-      html: `<b>to verify your account go for this  <a href="http://localhost:3000/api/users/verify/${verificationToken}">link</a></b>`, // html body
-    };
-    const sendMessage = await transport.sendMail(message);
+    const sendMessage = await transport.sendMail(message(email, verificationToken));
     if (!sendMessage) {
       throw HttpError(400, "Cannot send message");
     }
